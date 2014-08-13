@@ -24,6 +24,12 @@ class UserGroups extends \Phalcon\Mvc\Model
     protected $active;
 
     /**
+     * 
+     * @var integer
+     */
+    protected $admin = 0;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -63,6 +69,19 @@ class UserGroups extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field admin
+     * 
+     * @param integer $admin
+     * @return $this
+     */
+    public function setAdmin($admin)
+    {
+        $this->admin = $admin;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -90,6 +109,26 @@ class UserGroups extends \Phalcon\Mvc\Model
     public function getActive()
     {
         return $this->active;
+    }
+
+    /**
+     * Returns the value of field admin
+     * 
+     * @return integer
+     */
+    public function getAdmin()
+    {
+        return $this->admin;
+    }
+
+    /**
+     * Checks if the groups is an administrator group
+     * 
+     * @return boolean
+     */
+    public function isAdmin()
+    {
+        return (bool) $this->admin;
     }
 
     public function getSource()

@@ -25,7 +25,7 @@ class Auth extends Component
      * @param  array  $credentials
      * @return boolan
      */
-    public function check($credentials)
+    public function check($credentials, $admin = false)
     {
         $user = User::findFirstByEmail(strtolower($credentials['email']));
         if ($user == false) {
@@ -38,6 +38,15 @@ class Auth extends Component
             throw new Exception('Wrong email/password combination');
         }
 
+        if ($admin) {
+            // Get the group
+            $group = UserGroup::findFirst($user->getGroupId);
+            if(!$group || !$group->isAdmin()) {
+                $this->registerUserThrottling($user->getId());
+                throw new Exception('User is not a member of an administrator group');
+            }
+        }
+
         $this->checkUserFlags($user);
         $this->saveSuccessLogin($user);
 
@@ -45,7 +54,7 @@ class Auth extends Component
             $this->createRememberEnviroment($user);
         }
 
-        $this->setIdentity($user);
+        $this->setIdentity($user, $admin);
     }
 
     /**
@@ -53,13 +62,14 @@ class Auth extends Component
      *
      * @param object $user
      */
-    private function setIdentity($user)
+    private function setIdentity($user, $admin = false)
     {
         $st_identity = array(
             'id'    => $user->getId(),
             'email' => $user->getEmail(),
             'name'  => $user->getName(),
             'groupId' => $user->getGroupId(),
+            'admin' => $admin
         );
 
         if ($user->profile) {
@@ -75,7 +85,7 @@ class Auth extends Component
      * @param  \Phalcon\UserPlugin\Forms\User\LoginForm $form
      * @return \Phalcon\Http\ResponseInterface
      */
-    public function login($form)
+    public function login($form, $admin = false)
     {
         if (!$this->request->isPost()) {
             if ($this->hasRememberMe()) {
@@ -91,7 +101,7 @@ class Auth extends Component
                     'email'    => $this->request->getPost('email'),
                     'password' => $this->request->getPost('password'),
                     'remember' => $this->request->getPost('remember')
-                ));
+                ), $admin);
 
                 $pupRedirect = $this->getDI()->get('config')->pup->redirect;
 
@@ -100,6 +110,11 @@ class Auth extends Component
         }
 
         return false;
+    }
+
+    public function loginAdmin($form)
+    {
+
     }
 
     /**
