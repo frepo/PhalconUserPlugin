@@ -98,7 +98,7 @@ class Security extends Plugin
 
         foreach ($resources as $controller => $actions) {
             if ($controller == $controllerName) {
-                if (isset($controller['*'])) {
+                if(is_string($controller) && $controller == '*') {
                     return true;
                 } else {
                     if (in_array($actionName, $actions) || $actions[0] == '*') {
