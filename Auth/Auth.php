@@ -59,6 +59,7 @@ class Auth extends Component
             'id'    => $user->getId(),
             'email' => $user->getEmail(),
             'name'  => $user->getName(),
+            'groupId' => $user->getGroupId(),
         );
 
         if ($user->profile) {
