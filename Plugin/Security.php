@@ -12,6 +12,9 @@ use Phalcon\UserPlugin\Exception\UserPluginException as Exception;
  */
 class Security extends Plugin
 {
+    private $moduleName;
+    private $pupConfig;
+
     /**
      * Allowed resource types for the configuration file
      * @var array
@@ -39,8 +42,15 @@ class Security extends Plugin
             $controllerName = $dispatcher->getControllerName();
 
             if ($controllerName == 'user' && $actionName == 'login') {
-                return $this->response->redirect($config->pup->redirect->success);
+                return $this->response->redirect($this->pupConfig->redirect->success);
             }
+        }
+
+        $this->moduleName = $dispatcher->getModuleName();
+        if($modulePup = @$dispatcher->getDI()->get('config')->pup->{$this->moduleName}) {
+            $this->pupConfig = $modulePup;
+        } else {
+            $this->pupConfig = $dispatcher->getDI()->get('config')->pup->default;
         }
 
         $config = $dispatcher->getDI()->get('config');
@@ -55,7 +65,7 @@ class Security extends Plugin
                 $this->flash->notice('Private area. Please login.');
 
                 $this->view->disable();
-                return $this->response->redirect($config->pup->redirect->failure)->send();
+                return $this->response->redirect($this->pupConfig->redirect->failure)->send();
             }
         }
 
@@ -147,7 +157,7 @@ class Security extends Plugin
     private function getConfigStructure(\Phalcon\Config $config)
     {
         if (isset($config->pup)) {
-            $config = $config->pup->resources->toArray();
+            $config = $this->pupConfig->resources->toArray();
 
             if (!isset($config['type']) || (isset($config['type']) && !in_array($config['type'], $this->st_resourceTypes))) {
                 throw new Exception('Wrong configuration for key "type" or the key does not exists');
