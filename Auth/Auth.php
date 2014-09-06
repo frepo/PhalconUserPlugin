@@ -3,6 +3,7 @@ namespace Phalcon\UserPlugin\Auth;
 
 use Phalcon\Mvc\User\Component,
 Phalcon\UserPlugin\Repository\User\UserRepository as User,
+Phalcon\UserPlugin\Models\User\UserGroups,
 Phalcon\UserPlugin\Models\User\UserRememberTokens,
 Phalcon\UserPlugin\Models\User\UserSuccessLogins,
 Phalcon\UserPlugin\Models\User\UserFailedLogins;
@@ -54,7 +55,7 @@ class Auth extends Component
 
         if ($admin) {
             // Get the group
-            $group = UserGroup::findFirst($user->getGroupId);
+            $group = UserGroups::findFirst($user->getGroupId);
             if(!$group || !$group->isAdmin()) {
                 $this->registerUserThrottling($user->getId());
                 throw new Exception('User is not a member of an administrator group');

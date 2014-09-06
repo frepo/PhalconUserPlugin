@@ -60,6 +60,25 @@ class UserProfile extends \Phalcon\Mvc\Model
     protected $updated_at;
 
     /**
+     * 
+     * @var string
+     */
+    protected $bio;
+
+    /**
+     * 
+     * @var integer
+     */
+    protected $country;
+
+    /**
+     * 
+     * @var string
+     */
+    protected $slogan;
+
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -176,6 +195,28 @@ class UserProfile extends \Phalcon\Mvc\Model
         return $this;
     }
 
+    public function setBio($bio)
+    {
+        $this->bio = $bio;
+
+        return $this;
+    }
+
+    public function setCountry($country)
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function setSlogan($slogan)
+    {
+        $this->slogan = $slogan;
+
+        return $this;
+    }
+
+
     /**
      * Returns the value of field id
      *
@@ -264,6 +305,21 @@ class UserProfile extends \Phalcon\Mvc\Model
     public function getUpdatedAt()
     {
         return $this->updated_at;
+    }
+
+    public function getBio($bio)
+    {
+        return $this->bio;
+    }
+
+    public function getCountry($country)
+    {
+        return $this->country;
+    }
+
+    public function getSlogan($slogan)
+    {
+        return $this->slogan;
     }
 
     /**
