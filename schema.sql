@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS `user_groups` (
   `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(64) COLLATE utf8_bin NOT NULL,
   `active` tinyint(1) NOT NULL,
+  `admin` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `active` (`active`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=4 ;

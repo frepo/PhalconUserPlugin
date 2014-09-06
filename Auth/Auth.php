@@ -3,6 +3,7 @@ namespace Phalcon\UserPlugin\Auth;
 
 use Phalcon\Mvc\User\Component,
 Phalcon\UserPlugin\Repository\User\UserRepository as User,
+Phalcon\UserPlugin\Models\User\UserGroups,
 Phalcon\UserPlugin\Models\User\UserRememberTokens,
 Phalcon\UserPlugin\Models\User\UserSuccessLogins,
 Phalcon\UserPlugin\Models\User\UserFailedLogins;
@@ -19,13 +20,27 @@ Phalcon\UserPlugin\Connectors\TwitterConnector;
  */
 class Auth extends Component
 {
+    private $moduleName;
+    private $pupConfig;
+
+    public function __construct()
+    {
+        $di = $this->getDI();
+        $this->moduleName = $di->getDispatcher()->getModuleName();
+        if($modulePup = @$di->get('config')->pup->{$this->moduleName}) {
+            $this->pupConfig = $modulePup;
+        } else {
+            $this->pupConfig = $di->get('config')->pup->default;
+        }
+    }
+
     /**
      * Checks the user credentials
      *
      * @param  array  $credentials
      * @return boolan
      */
-    public function check($credentials)
+    public function check($credentials, $admin = false)
     {
         $user = User::findFirstByEmail(strtolower($credentials['email']));
         if ($user == false) {
@@ -38,6 +53,15 @@ class Auth extends Component
             throw new Exception('Wrong email/password combination');
         }
 
+        if ($admin) {
+            // Get the group
+            $group = UserGroups::findFirst($user->getGroupId);
+            if(!$group || !$group->isAdmin()) {
+                $this->registerUserThrottling($user->getId());
+                throw new Exception('User is not a member of an administrator group');
+            }
+        }
+
         $this->checkUserFlags($user);
         $this->saveSuccessLogin($user);
 
@@ -45,7 +69,7 @@ class Auth extends Component
             $this->createRememberEnviroment($user);
         }
 
-        $this->setIdentity($user);
+        $this->setIdentity($user, $admin);
     }
 
     /**
@@ -53,13 +77,14 @@ class Auth extends Component
      *
      * @param object $user
      */
-    private function setIdentity($user)
+    private function setIdentity($user, $admin = false)
     {
         $st_identity = array(
             'id'    => $user->getId(),
             'email' => $user->getEmail(),
             'name'  => $user->getName(),
             'groupId' => $user->getGroupId(),
+            'admin' => $admin
         );
 
         if ($user->profile) {
@@ -75,7 +100,7 @@ class Auth extends Component
      * @param  \Phalcon\UserPlugin\Forms\User\LoginForm $form
      * @return \Phalcon\Http\ResponseInterface
      */
-    public function login($form)
+    public function login($form, $admin = false)
     {
         if (!$this->request->isPost()) {
             if ($this->hasRememberMe()) {
@@ -91,15 +116,26 @@ class Auth extends Component
                     'email'    => $this->request->getPost('email'),
                     'password' => $this->request->getPost('password'),
                     'remember' => $this->request->getPost('remember')
-                ));
+                ), $admin);
 
-                $pupRedirect = $this->getDI()->get('config')->pup->redirect;
+                $pupRedirect = $this->pupConfig->redirect;
 
                 return $this->response->redirect($pupRedirect->success);
             }
         }
 
         return false;
+    }
+
+    /**
+     * Login admin
+     * 
+     * @param \Phalcon\UserPlugin\Forms\User\LoginForm $form 
+     * @return \Phalcon\Http\ResponseInterface
+     */
+    public function loginAdmin($form)
+    {
+        return $this->login($form, true);
     }
 
     /**
@@ -127,7 +163,7 @@ class Auth extends Component
         }
 
         if ($facebookUser) {
-            $pupRedirect = $di->get('config')->pup->redirect;
+            $pupRedirect = $this->pupConfig->redirect;
             $email = isset($facebookUserProfile['email']) ? $facebookUserProfile['email'] : 'a@a.com';
             $user = User::findFirst(" email='$email' OR facebook_id='".$facebookUserProfile['id']."' ");
 
@@ -189,7 +225,7 @@ class Auth extends Component
         $token_expires = $this->session->get('linkedIn_token_expires_on', 0);
 
         if ($token && $token_expires > time()) {
-            $pupRedirect = $di->get('config')->pup->redirect;
+            $pupRedirect = $this->pupConfig->redirect;
             $li->setAccessToken($this->session->get('linkedIn_token'));
             $email = $li->get('/people/~/email-address');
             $info = $li->get('/people/~');
@@ -261,7 +297,7 @@ class Auth extends Component
     public function loginWithTwitter()
     {
         $di          = $this->getDI();
-        $pupRedirect = $di->get('config')->pup->redirect;
+        $pupRedirect = $this->pupConfig->redirect;
         $oauth       = $this->session->get('twitterOauth');
         $config      = $di->get('config')->pup->connectors->twitter->toArray();
         $config      = array_merge($config, array('token' => $oauth['token'], 'secret' => $oauth['secret']));
@@ -342,7 +378,7 @@ class Auth extends Component
         $di       = $this->getDI();
         $config   = $di->get('config')->pup->connectors->google->toArray();
 
-        $pupRedirect            = $di->get('config')->pup->redirect;
+        $pupRedirect            = $this->pupConfig->redirect;
         $config['redirect_uri'] = $config['redirect_uri'].'user/loginWithGoogle';
 
         $google = new GoogleConnector($config);
@@ -504,7 +540,7 @@ class Auth extends Component
 
         $user = User::findFirstById($userId);
 
-        $pupRedirect = $this->getDI()->get('config')->pup->redirect;
+        $pupRedirect = $this->pupConfig->redirect;
 
         if ($user) {
             $userAgent = $this->request->getUserAgent();
