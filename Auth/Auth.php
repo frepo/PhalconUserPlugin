@@ -21,7 +21,7 @@ Phalcon\UserPlugin\Connectors\TwitterConnector;
 class Auth extends Component
 {
     private $moduleName;
-    private $pupConfig;
+    protected $pupConfig;
 
     public function __construct()
     {
