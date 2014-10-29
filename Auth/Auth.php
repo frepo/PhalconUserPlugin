@@ -55,7 +55,7 @@ class Auth extends Component
 
         if ($admin) {
             // Get the group
-            $group = UserGroups::findFirst($user->getGroupId);
+            $group = UserGroups::findFirst($user->getGroupId());
             if(!$group || !$group->isAdmin()) {
                 $this->registerUserThrottling($user->getId());
                 throw new Exception('User is not a member of an administrator group');
