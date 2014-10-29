@@ -150,6 +150,18 @@ class User extends \Phalcon\Mvc\Model
     protected $updated_at;
 
     /**
+     * 
+     * @var string
+     */
+    protected $api_key;
+
+    /**
+     * 
+     * @var string
+     */
+    protected $api_secret;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -462,6 +474,32 @@ class User extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field api_key
+     * 
+     * @param string $api_key
+     * @return $this
+     */
+    public function setApiKey($api_key)
+    {
+        $this->api_key = $api_key;
+
+        return $this;
+    }
+
+    /**
+     * Method to set the value of field api_secret
+     * 
+     * @param string $api_secret
+     * @return $this
+     */
+    public function setApiSecret($api_secret)
+    {
+        $this->api_secret = $api_secret;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -729,6 +767,26 @@ class User extends \Phalcon\Mvc\Model
     public function getUpdatedAt()
     {
         return $this->updated_at;
+    }
+
+    /**
+     * Returns the value of field api_key
+     * 
+     * @return string
+     */
+    public function getApiKey()
+    {
+        return $this->api_key;
+    }
+
+    /**
+     * Returns the value of field api_secret
+     * 
+     * @return string
+     */
+    public function getApiSecret()
+    {
+        return $this->api_secret;
     }
 
     /**
