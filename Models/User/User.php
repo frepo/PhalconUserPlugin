@@ -162,6 +162,12 @@ class User extends \Phalcon\Mvc\Model
     protected $api_secret;
 
     /**
+     *
+     * @var integer
+     */
+    protected $country;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -500,6 +506,19 @@ class User extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field country
+     *
+     * @param integer $country
+     * @return $this;
+     */
+    public function setCountry($country)
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -787,6 +806,16 @@ class User extends \Phalcon\Mvc\Model
     public function getApiSecret()
     {
         return $this->api_secret;
+    }
+
+    /**
+     * Returns the value of field country
+     *
+     * @return integer
+     */
+    public function getCountry()
+    {
+        return $this->country;
     }
 
     /**
