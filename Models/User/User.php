@@ -165,7 +165,7 @@ class User extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
-    protected $country;
+    protected $country_id;
 
     /**
      * Method to set the value of field id
@@ -506,14 +506,14 @@ class User extends \Phalcon\Mvc\Model
     }
 
     /**
-     * Method to set the value of field country
+     * Method to set the value of field country_id
      *
-     * @param integer $country
+     * @param integer $country_id
      * @return $this;
      */
-    public function setCountry($country)
+    public function setCountryId($country_id)
     {
-        $this->country = $country;
+        $this->country_id = $country_id;
 
         return $this;
     }
@@ -809,13 +809,13 @@ class User extends \Phalcon\Mvc\Model
     }
 
     /**
-     * Returns the value of field country
+     * Returns the value of field country_id
      *
      * @return integer
      */
-    public function getCountry()
+    public function getCountryId()
     {
-        return $this->country;
+        return $this->country_id;
     }
 
     /**
@@ -872,6 +872,11 @@ class User extends \Phalcon\Mvc\Model
             'foreignKey' => array(
                 'message' => 'User cannot be deleted because he/she has activity in the system'
             )
+        ));
+
+        $this->belongsTo('country_id', 'Dhl\LabelGenerator\Models\Country', 'id', array(
+            'alias' => 'country',
+            'reusable' => true
         ));
     }
 
