@@ -168,6 +168,12 @@ class User extends \Phalcon\Mvc\Model
     protected $country_id;
 
     /**
+     *
+     * @var integer
+     */
+    protected $client_number;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -519,6 +525,19 @@ class User extends \Phalcon\Mvc\Model
     }
 
     /**
+     * Method to set the value of field client_number
+     *
+     * @param integer $client_number
+     * @return $this
+     */
+    public function setClientNumber($client_number)
+    {
+        $this->client_number = $client_number;
+
+        return $this;
+    }
+
+    /**
      * Returns the value of field id
      *
      * @return integer
@@ -816,6 +835,16 @@ class User extends \Phalcon\Mvc\Model
     public function getCountryId()
     {
         return $this->country_id;
+    }
+
+    /**
+     * Returns the value of field client_number
+     *
+     * @return integer
+     */
+    public function getClientNumber()
+    {
+        return $this->client_number;
     }
 
     /**
