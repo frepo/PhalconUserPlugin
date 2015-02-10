@@ -21,6 +21,7 @@ a production environment.
 - Login / Register with LinkedIn account
 - Login / Register with Twitter account
 - Login / Register with Google account
+- Login with LDAP account
 - Change password
 - Password recovery by email
 - Protect different areas from your website, where a user must be loged in, in order to have access
@@ -192,6 +193,23 @@ Configuration example with connectors:
                 ),
             )
          ),
+         'ldap' => array(
+            'domain_controllers' => array('10.1.0.2'),
+            'account_suffix' => '@domain.tld',
+            'base_dn' => 'DC=domain,DC=tld',
+            // 'ad_port' => 389,
+            // 'use_ssl' => false,
+            // 'use_tls' => false,
+            // 'sso' => false,
+            // 'recursive_groups' => false,
+            // 'followReferals' => 0
+            'allowed_groups' => array(
+                'users',
+            ),
+            'group_binds' => array(
+                'Administrator' => 'administrators'
+            )
+         ),
          'connectors' => array(
              'facebook' => array(
                  'appId' => 'YOUR_FACEBOOK_APP_ID',
@@ -321,4 +339,5 @@ class UserController extends Controller
 
 ### <a id="todo"></a>TODO
 - Implement CRUD templates for ACl, UserManagement, etc
-
+- Add support for password reset when using LDAP
+- Add support for filtering users on groups when using LDAP

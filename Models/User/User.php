@@ -162,6 +162,12 @@ class User extends \Phalcon\Mvc\Model
     protected $api_secret;
 
     /**
+     * 
+     * @var integer
+     */
+    protected $user_type;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -499,6 +505,13 @@ class User extends \Phalcon\Mvc\Model
         return $this;
     }
 
+    public function setUserType($user_type)
+    {
+        $this->user_type = $user_type;
+
+        return $this;
+    }
+
     /**
      * Returns the value of field id
      *
@@ -789,6 +802,11 @@ class User extends \Phalcon\Mvc\Model
         return $this->api_secret;
     }
 
+    public function getUserType()
+    {
+        return $this->user_type;
+    }
+
     /**
      * Checks if the password has to be changed
      *
@@ -821,6 +839,11 @@ class User extends \Phalcon\Mvc\Model
     {
         $this->belongsTo('profile_id', 'Phalcon\UserPlugin\Models\User\UserProfile', 'id', array(
             'alias' => 'profile',
+            'reusable' => true
+        ));
+
+        $this->belongsTo('user_type', 'Phalcon\UserPlugin\Models\User\UserType', 'id', array(
+            'alias' => 'type',
             'reusable' => true
         ));
 

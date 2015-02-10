@@ -22,15 +22,35 @@ class Auth extends Component
 {
     private $moduleName;
     protected $pupConfig;
+    protected $authMethods;
+    protected $adLDAP;
+    private $di;
 
     public function __construct()
     {
-        $di = $this->getDI();
-        $this->moduleName = $di->getDispatcher()->getModuleName();
-        if($modulePup = @$di->get('config')->pup->{$this->moduleName}) {
+        $this->di = $this->getDI();
+        $this->moduleName = $this->di->getDispatcher()->getModuleName();
+        if($modulePup = @$this->di->get('config')->pup->{$this->moduleName}) {
             $this->pupConfig = $modulePup;
         } else {
-            $this->pupConfig = $di->get('config')->pup->default;
+            $this->pupConfig = $this->di->get('config')->pup->default;
+        }
+
+        if(isset($this->pupConfig->authMethod) && is_object($this->pupConfig->authMethod))
+            $this->authMethods = $this->pupConfig->authMethod->toArray();
+
+        // Load adLDAP if enabled in the config
+        if(in_array('ldap', $this->authMethods)) {
+            global $loader;
+            $namespaces = $loader->getNamespaces();
+
+            $adLdapPath = __DIR__ . '/../../../../../adldap/adldap/lib/adLDAP';
+            // Register the adLDAP namespace if it hasn't been registered yet.
+            if(!in_array($adLdapPath, $namespaces)) {
+                $loader->registerNamespaces(array_merge($namespaces, array('adLDAP' => $adLdapPath)));
+            }
+
+            $this->adLDAP = new \adLDAP\adLDAP($this->di->get('config')->pup->ldap->toArray());
         }
     }
 
@@ -95,6 +115,84 @@ class Auth extends Component
     }
 
     /**
+     * Checks the user credentials against the local database
+     * 
+     * @param array $args
+     * @param boolean $admin true if we need to check if user is admin
+     * @return true if success (no exception thrown)
+     * @throws Exception
+     */
+    public function checkLocaldb($args, $admin = false) {
+        $this->check($args);
+        return true;
+    }
+
+    /**
+     * Checks the user credentials against LDAP
+     *
+     * @param array $args
+     * @return true if success (no exception thrown)
+     * @throws Exception
+     */
+    public function checkLdap($args, $admin = false) {
+        if(!$this->adLDAP->user()->authenticate($args['email'], $args['password'])) {
+            Throw new Exception("Authentication error: ".$this->adLDAP->getLastError());
+        }
+
+        $ldapInfo = $this->adLDAP->user()->info($args['email']);
+
+        $password = $this->di->get('security')->hash($args['password']);
+
+        $user = User::findFirstByEmail(strtolower($args['email']));
+        if($user == false) {
+            // Create new user object so we have something to track the user with
+            $user = new User();
+            $user->setName($ldapInfo[0]['displayname'][0]);
+            $user->setEmail($args['email']);
+            $user->setPassword($password);
+            $user->setActive(1);
+            // Add user to the LDAP group
+            $user->setGroupId(2);
+
+            // Save
+            if(!$user->save()) {
+                foreach($user->getMessages() as $message) {
+                    //$this->flash->error($message);
+                    throw new Exception('LDAP Error: '.$message);
+                }
+            };
+        }
+
+        // Sync user password if localdb password doesn't match LDAP
+        if($user->getPassword() !== $password) {
+            $user->setPassword($password);
+            if(!$user->save()) {
+                foreach($user->getMessages() as $message) {
+                    throw new Exception('Sync error. Please contact an administrator');
+                    // @TODO: Add options for moderators/admin to force password sync
+                }
+            }
+        }
+
+        if($admin) {
+            $group = UserGroups::findFirst($user->getGroupId());
+            if(!$group || !$group->isAdmin()) {
+                $this->registerUserThrottling($user->getId());
+                throw new Exception('User is not a member of an administrator group');
+            }
+        }
+
+        $this->checkUserFlags($user);
+        $this->saveSuccessLogin($user);
+
+        if(isset($args['remember'])) {
+            $this->createRememberEnviroment($user);
+        }
+
+        $this->setIdentity($user, $admin);
+    }
+
+    /**
      * Login user - normal way
      *
      * @param  \Phalcon\UserPlugin\Forms\User\LoginForm $form
@@ -112,11 +210,33 @@ class Auth extends Component
                     $this->flashSession->error($message->getMessage());
                 }
             } else {
-                $this->check(array(
-                    'email'    => $this->request->getPost('email'),
-                    'password' => $this->request->getPost('password'),
-                    'remember' => $this->request->getPost('remember')
-                ), $admin);
+                $authMethods = array('localdb');
+                if(isset($this->pupConfig->authMethod))
+                    $authMethods = $this->pupConfig->authMethod;
+
+                $loginExceptions = false;
+                $loginSuccess = false;
+
+                foreach($this->authMethods as $authMethod) {
+                    if($loginSuccess)
+                        continue;
+                    try {
+                        // Only try to login if previous methods have yielded no results
+                        if(!$loginSuccess && method_exists($this, "check{$authMethod}")) {
+                            $loginSuccess = $this->{"check{$authMethod}"}(array(
+                                'email'    => $this->request->getPost('email'),
+                                'password' => $this->request->getPost('password'),
+                                'remember' => $this->request->getPost('remember')
+                            ));
+                        }
+                    } catch ( \Exception $e ) {
+                        $loginExceptions = $e;
+                    }
+                }
+
+                if(!$loginSuccess && $loginExceptions) {
+                    throw new Exception($loginExceptions->getMessage());
+                }
 
                 $pupRedirect = $this->pupConfig->redirect;
 
@@ -143,17 +263,17 @@ class Auth extends Component
      */
     public function loginWithFacebook()
     {
-        $di = $this->getDI();
-        $facebook = new FacebookConnector($di);
+        
+        $facebook = new FacebookConnector($this->di);
         $facebookUser = $facebook->getUser();
 
         if ($facebookUser) {
             try {
                 $facebookUserProfile = $facebook->api('/me');
             } catch (\FacebookApiException $e) {
-                $di->logger->begin();
-                $di->logger->error($e->getMessage());
-                $di->logger->commit();
+                $this->di->logger->begin();
+                $this->di->logger->error($e->getMessage());
+                $this->di->logger->commit();
                 $facebookUser = null;
             }
         } else {
@@ -185,7 +305,7 @@ class Auth extends Component
 
                 $user = new User();
                 $user->setEmail($email);
-                $user->setPassword($di->get('security')->hash($password));
+                $user->setPassword($this->di->get('security')->hash($password));
                 $user->setFacebookId($facebookUserProfile['id']);
                 $user->setFacebookName($facebookUserProfile['name']);
                 $user->setFacebookData(serialize($facebookUserProfile));
@@ -216,8 +336,8 @@ class Auth extends Component
      */
     public function loginWithLinkedIn()
     {
-        $di = $this->getDI();
-        $config = $di->get('config')->pup->connectors->linkedIn->toArray();
+        
+        $config = $this->di->get('config')->pup->connectors->linkedIn->toArray();
         $config['callback_url'] = $config['callback_url'].'user/loginWithLinkedIn';
         $li = new LinkedInConnector($config);
 
@@ -252,7 +372,7 @@ class Auth extends Component
 
                 $user = new User();
                 $user->setEmail($email);
-                $user->setPassword($di->get('security')->hash($password));
+                $user->setPassword($this->di->get('security')->hash($password));
                 $user->setLinkedinId($linkedInId);
                 $user->setLinkedinName($info['firstName'].' '.$info['lastName']);
                 $user->setLinkedinData(json_encode($info));
@@ -296,13 +416,13 @@ class Auth extends Component
      */
     public function loginWithTwitter()
     {
-        $di          = $this->getDI();
+        $this->di          = $this->getDI();
         $pupRedirect = $this->pupConfig->redirect;
         $oauth       = $this->session->get('twitterOauth');
-        $config      = $di->get('config')->pup->connectors->twitter->toArray();
+        $config      = $this->di->get('config')->pup->connectors->twitter->toArray();
         $config      = array_merge($config, array('token' => $oauth['token'], 'secret' => $oauth['secret']));
 
-        $twitter = new TwitterConnector($config, $di);
+        $twitter = new TwitterConnector($config, $this->di);
         if ($this->request->get('oauth_token')) {
             $twitter->access_token();
 
@@ -337,7 +457,7 @@ class Auth extends Component
                             $email = $response['screen_name'].rand(100000,999999).'@domain.tld'; // Twitter does not prived user's email
                             $user = new User();
                             $user->setEmail($email);
-                            $user->setPassword($di->get('security')->hash($password));
+                            $user->setPassword($this->di->get('security')->hash($password));
                             $user->setTwitterId($response['id']);
                             $user->setTwitterName($response['name']);
                             $user->setTwitterData(json_encode($response));
@@ -364,9 +484,9 @@ class Auth extends Component
                     }
                 }
             } else {
-                $di->get('logger')->begin();
-                $di->get('logger')->error(json_encode($twitter->response));
-                $di->get('logger')->commit();
+                $this->di->get('logger')->begin();
+                $this->di->get('logger')->error(json_encode($twitter->response));
+                $this->di->get('logger')->commit();
             }
         } else {
             return $this->response->redirect($twitter->request_token(), true);
@@ -375,15 +495,15 @@ class Auth extends Component
 
     public function loginWithGoogle()
     {
-        $di       = $this->getDI();
-        $config   = $di->get('config')->pup->connectors->google->toArray();
+        $this->di       = $this->getDI();
+        $config   = $this->di->get('config')->pup->connectors->google->toArray();
 
         $pupRedirect            = $this->pupConfig->redirect;
         $config['redirect_uri'] = $config['redirect_uri'].'user/loginWithGoogle';
 
         $google = new GoogleConnector($config);
 
-        $response = $google->connect($di);
+        $response = $google->connect($this->di);
 
         if ($response['status'] == 0) {
             return $this->response->redirect($response['redirect'], true);
@@ -412,7 +532,7 @@ class Auth extends Component
 
                 $user = new User();
                 $user->setEmail($email);
-                $user->setPassword($di->get('security')->hash($password));
+                $user->setPassword($this->di->get('security')->hash($password));
                 $user->setGplusId($gplusId);
                 $user->setGplusName($name);
                 $user->setGplusData(serialize($response['userinfo']));

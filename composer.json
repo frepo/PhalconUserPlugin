@@ -11,13 +11,20 @@
             "email": "rada.calin@gmail.com"
         }
     ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/PBXg33k/adLDAP.git"
+        }
+    ],
     "minimum-stability": "dev",
     "require": {
         "php": ">=5.3.2",
         "swiftmailer/swiftmailer": ">=4.3, <6.0",
         "facebook/php-sdk": "3.2.*",
         "nyholm/google-api-php-client": "dev-master",
-        "imagine/imagine": "dev-master"
+        "imagine/imagine": "dev-master",
+        "adldap/adldap": "dev-master"
     },
     "autoload": {
         "files": ["lib/swift_required.php"]
