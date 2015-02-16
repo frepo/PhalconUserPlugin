@@ -24,7 +24,7 @@
         "facebook/php-sdk": "3.2.*",
         "nyholm/google-api-php-client": "dev-master",
         "imagine/imagine": "dev-master",
-        "adldap/adldap": "dev-master"
+        "adldap/adldap": "dev-develop"
     },
     "autoload": {
         "files": ["lib/swift_required.php"]
