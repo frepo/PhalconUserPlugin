@@ -174,6 +174,12 @@ class User extends \Phalcon\Mvc\Model
     protected $client_number;
 
     /**
+     * 
+     * @var integer
+     */
+    protected $increment_number;
+
+    /**
      * Method to set the value of field id
      *
      * @param integer $id
@@ -537,6 +543,20 @@ class User extends \Phalcon\Mvc\Model
         return $this;
     }
 
+    public function setIncrementNumber($increment_number)
+    {
+        $this->increment_number = $increment_number;
+
+        return $this;
+    }
+
+    public function addIncrement()
+    {
+        $this->increment_number++;
+
+        return $this;
+    }
+
     /**
      * Returns the value of field id
      *
@@ -847,6 +867,11 @@ class User extends \Phalcon\Mvc\Model
         return $this->client_number;
     }
 
+    public function getIncrementNumber()
+    {
+        return $this->increment_number;
+    }
+
     /**
      * Checks if the password has to be changed
      *
@@ -949,6 +974,11 @@ class User extends \Phalcon\Mvc\Model
     public function beforeValidation()
     {
         $this->created_at = date("Y-m-d H:i:s"); // Don't use mysql server time, but use application's timezone
+    }
+
+    public function beforeCreate()
+    {
+        $this->increment_number = 1;
     }
 
     /**
