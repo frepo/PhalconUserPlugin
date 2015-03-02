@@ -135,7 +135,7 @@ class User extends \Phalcon\Mvc\Model
      *
      * @var integer
      */
-    protected $active = 0;
+    protected $active;
 
     /**
      *
@@ -965,10 +965,6 @@ class User extends \Phalcon\Mvc\Model
             $this->must_change_password = 1;
             $this->password = $this->getDI()->getSecurity()->hash($tempPassword);
         }
-
-        if (1 !== $this->active) {
-            $this->active = 0;
-        }
     }
 
     public function beforeValidation()
@@ -987,7 +983,7 @@ class User extends \Phalcon\Mvc\Model
     public function afterSave()
     {
         if (true === $this->isActive()) {
-            return;
+            return true;
         }
         $emailConfirmation = new UserEmailConfirmations();
         $emailConfirmation->setUserId($this->id);

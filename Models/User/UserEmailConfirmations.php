@@ -216,23 +216,6 @@ class UserEmailConfirmations extends \Phalcon\Mvc\Model
         $this->modified_at = date('Y-m-d H:i:s');
     }
 
-    /**
-     * Send a confirmation e-mail to the user after create the account
-     */
-    public function afterCreate()
-    {
-        $this->getDI()->getMail()->send(
-            array(
-                $this->user->getEmail() => $this->user->getName()
-            ),
-            'Please confirm your email',
-            'confirmation',
-            array(
-                'confirmUrl' => '/user/confirmEmail/' . $this->getCode(). '/' . $this->user->getEmail()
-            )
-        );
-    }
-
     public function initialize()
     {
         $this->belongsTo('user_id', 'Phalcon\UserPlugin\Models\User\User', 'id', array(
