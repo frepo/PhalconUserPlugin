@@ -32,8 +32,8 @@ class UserProfileForm extends Form
         $this->add(new Hidden('birth_date'));
 
         $this->add(new Select('gender', array(
-            0 => $translate['Male'],
-            1 => $translate['Female']
+            0 => $translate->_('Male'),
+            1 => $translate->_('Female')
         )));
 
         //CSRF

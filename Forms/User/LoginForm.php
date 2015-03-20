@@ -22,15 +22,15 @@ class LoginForm extends Form
 
         //Email
         $email = new Text('email', array(
-            'placeholder' => $translate['Email']
+            'placeholder' => $translate->_('Email')
         ));
 
         $email->addValidators(array(
             new PresenceOf(array(
-                'message' => $translate['The e-mail is required']
+                'message' => $translate->_('The e-mail is required')
             )),
             new Email(array(
-                'message' => $translate['The e-mail is not valid']
+                'message' => $translate->_('The e-mail is not valid')
             ))
         ));
 
@@ -38,12 +38,12 @@ class LoginForm extends Form
 
         //Password
         $password = new Password('password', array(
-            'placeholder' => $translate['Password']
+            'placeholder' => $translate->_('Password')
         ));
 
         $password->addValidator(
             new PresenceOf(array(
-                'message' => $translate['The password is required']
+                'message' => $translate->_('The password is required')
             ))
         );
 
@@ -54,7 +54,7 @@ class LoginForm extends Form
             'value' => 'yes'
         ));
 
-        $remember->setLabel($translate['Remember me']);
+        $remember->setLabel($translate->_('Remember me'));
 
         $this->add($remember);
 
@@ -64,7 +64,7 @@ class LoginForm extends Form
         $csrf->addValidator(
             new Identical(array(
                 'value' => $this->security->getSessionToken(),
-                'message' => 'CSRF validation failed'
+                'message' => $translate->_('CSRF validation failed'),
             ))
         );
 

@@ -39,16 +39,16 @@ class UserForm extends Form
             'emptyValue' => ''
         )));
         $this->add(new Select('banned', array(
-            1 => $translate['Yes'],
-            0 => $translate['No']
+            1 => $translate->_('Yes'),
+            0 => $translate->_('No')
         )));
         $this->add(new Select('suspended', array(
-            1 => $translate['Yes'],
-            0 => $translate['No']
+            1 => $translate->_('Yes'),
+            0 => $translate->_('No')
         )));
         $this->add(new Select('active', array(
-            1 => $translate['Yes'],
-            0 => $translate['No']
+            1 => $translate->_('Yes'),
+            0 => $translate->_('No')
         )));
     }
 }
