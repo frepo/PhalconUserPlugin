@@ -882,6 +882,11 @@ class User extends \Phalcon\Mvc\Model
         return (bool) $this->must_change_password;
     }
 
+    public function getMeta($parameters = null)
+    {
+        return $this->getRelated('userMeta', $parameters);
+    }
+
     /**
      * Validations and business logic
      */
@@ -931,6 +936,13 @@ class User extends \Phalcon\Mvc\Model
         $this->belongsTo('country_id', 'Dhl\LabelGenerator\Models\Country', 'id', array(
             'alias' => 'country',
             'reusable' => true
+        ));
+
+        $this->hasMany('id', 'Phalcon\UserPlugin\Models\User\UserMeta', 'user_id', array(
+            'alias' => 'userMeta',
+            'foreignKey' => array(
+                'message' => 'User cannot be deleted because he/she has activity in the system'
+            ),
         ));
     }
 
