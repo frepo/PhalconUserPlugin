@@ -18,8 +18,7 @@ class LoginForm extends Form
 {
     public function initialize()
     {
-        $translate = $this->getDi()->get('translate');
-
+        $translate = $this->getDI()->get('translate');
         //Email
         $email = new Text('email', array(
             'placeholder' => $translate->_('Email')

@@ -21,7 +21,7 @@ class UserProfileForm extends Form
     public function initialize($entity=null, $options=null)
     {
         $translate = $this->getDI()->get('translate');
-
+        
         if (isset($options['edit']) && $options['edit']) {
             $id = new Hidden('id');
         } else {
