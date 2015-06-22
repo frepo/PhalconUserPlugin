@@ -1,6 +1,7 @@
 <?php
 namespace Phalcon\UserPlugin\Models\User;
 
+use Phalcon\Mvc\Model\Relation;
 use Phalcon\Mvc\Model\Validator\Uniqueness;
 
 class User extends \Phalcon\Mvc\Model
@@ -915,21 +916,21 @@ class User extends \Phalcon\Mvc\Model
         $this->hasMany('id', 'Phalcon\UserPlugin\Models\User\UserSuccessLogins', 'user_id', array(
             'alias' => 'successLogins',
             'foreignKey' => array(
-                'message' => 'User cannot be deleted because he/she has activity in the system'
+                'action' => Relation::ACTION_CASCADE
             )
         ));
 
         $this->hasMany('id', 'Phalcon\UserPlugin\Models\User\UserPasswordChanges', 'user_id', array(
             'alias' => 'passwordChanges',
             'foreignKey' => array(
-                'message' => 'User cannot be deleted because he/she has activity in the system'
+                'action' => Relation::ACTION_CASCADE
             )
         ));
 
         $this->hasMany('id', 'Phalcon\UserPlugin\Models\User\UserResetPasswords', 'user_id', array(
             'alias' => 'resetPasswords',
             'foreignKey' => array(
-                'message' => 'User cannot be deleted because he/she has activity in the system'
+                'action' => Relation::ACTION_CASCADE
             )
         ));
 
@@ -941,7 +942,7 @@ class User extends \Phalcon\Mvc\Model
         $this->hasMany('id', 'Phalcon\UserPlugin\Models\User\UserMeta', 'user_id', array(
             'alias' => 'userMeta',
             'foreignKey' => array(
-                'message' => 'User cannot be deleted because he/she has activity in the system'
+                'action' => Relation::ACTION_CASCADE
             ),
         ));
     }
